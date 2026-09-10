@@ -15,7 +15,7 @@
   --radius:14px; --shadow:0 1px 3px rgba(30,42,68,.06),0 8px 24px rgba(30,42,68,.05);
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:"PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+body{font-family:"PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.62}
 ::-webkit-scrollbar{height:8px;width:8px}
 ::-webkit-scrollbar-thumb{background:#ccd4e4;border-radius:4px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -70,16 +70,18 @@ main{max-width:1280px;margin:0 auto;padding:20px 24px 60px}
 .card-body{padding:18px}
 
 /* ===== 漏斗 ===== */
-.funnel-wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:20px}
+.funnel-wrap{display:grid;grid-template-columns:1.15fr .85fr;gap:24px}
 @media(max-width:960px){.funnel-wrap{grid-template-columns:1fr}}
-.funnel-svg{width:100%;height:auto;display:block}
-.funnel-svg text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
-.funnel-svg .fseg{cursor:pointer;transition:filter .2s ease,opacity .2s ease}
-.funnel-svg .fseg:hover{filter:brightness(1.12)}
-.funnel-legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:12px;padding-top:11px;border-top:1px dashed var(--border)}
-.flegend{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--sub)}
-.flegend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.funnel-svg{width:100%;height:auto;display:block;overflow:visible}
+.funnel-svg text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;pointer-events:none}
+.funnel-svg .fseg{cursor:pointer;transition:filter .2s ease,transform .2s ease;transform-box:fill-box;transform-origin:center}
+.funnel-svg .fseg:hover{filter:brightness(1.07);transform:translateY(-2px)}
+.funnel-legend{display:flex;flex-wrap:wrap;gap:10px 12px;margin-top:18px;padding-top:15px;border-top:1px dashed var(--border)}
+.flegend{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--sub);background:#f7f9fd;border:1px solid var(--border);padding:4px 12px;border-radius:20px}
+.flegend i{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0}
 .flegend b{color:var(--text);font-weight:700}
+.ins-item{margin-bottom:13px;line-height:1.9;font-size:13.5px;color:var(--text)}
+.ins-item:last-child{margin-bottom:0}
 
 .stage-table{width:100%;border-collapse:collapse;font-size:13px}
 .stage-table th{background:#f7f9fd;color:var(--sub);font-weight:600;padding:9px 10px;text-align:left;font-size:12px;border-bottom:1px solid var(--border);white-space:nowrap}
@@ -175,6 +177,36 @@ code{background:#eef1f8;padding:1px 6px;border-radius:5px;font-size:12px;color:#
 .resume-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .resume-tags span{font-size:11px;background:#f0f5ff;border:1px solid #d4e2ff;color:#3a5db8;padding:2px 9px;border-radius:20px}
 @media(max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}.topbar{padding:10px 14px}main{padding:14px 14px 50px}.grid3{grid-template-columns:1fr 1fr}}
+
+/* ===== 报告 ===== */
+.seg{display:inline-flex;background:#eef1f8;border-radius:10px;padding:3px;gap:2px}
+.seg-btn{border:none;background:transparent;padding:6px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--sub);transition:.15s}
+.seg-btn.active{background:#fff;color:var(--primary);box-shadow:0 1px 4px rgba(30,42,68,.1)}
+.rep-period{font-size:13px;color:var(--sub);font-weight:600}
+.report-doc{background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px 32px;display:none;margin-bottom:16px}
+.report-doc.show{display:block}
+.report-doc h1{font-size:22px;margin-bottom:4px;letter-spacing:-.3px}
+.report-doc .rep-meta{color:var(--muted);font-size:12.5px;margin-bottom:6px;line-height:1.7}
+.report-doc h2{font-size:16px;margin:24px 0 10px;padding-left:10px;border-left:4px solid var(--primary);color:var(--text)}
+.report-doc .rkpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0}
+.report-doc .rkpi{background:var(--primary-weak);border:1px solid #d8e2ff;border-radius:12px;padding:12px 14px}
+.report-doc .rkpi .rl{font-size:12px;color:var(--sub)}
+.report-doc .rkpi .rn{font-size:24px;font-weight:800;color:var(--primary);margin-top:2px}
+.report-doc .rkpi .rn .u{font-size:13px;color:var(--muted);font-weight:600;margin-left:2px}
+.report-doc table.rtab{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0}
+.report-doc table.rtab th{background:#f7f9fd;color:var(--sub);font-weight:600;text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);font-size:12px;white-space:nowrap}
+.report-doc table.rtab td{padding:9px 10px;border-bottom:1px solid #f0f2f8}
+.report-doc table.rtab tr:last-child td{border-bottom:none}
+.report-doc .delta{font-size:12px;font-weight:700}
+.report-doc .delta.up{color:var(--green)}
+.report-doc .delta.down{color:var(--red)}
+.report-doc ul{margin:6px 0 6px 20px;line-height:1.85;font-size:13.5px;color:var(--text)}
+.report-doc .risk-item{display:flex;gap:10px;align-items:flex-start;padding:8px 12px;background:#fff7e6;border:1px solid #ffd591;border-radius:10px;margin-bottom:8px;font-size:13px;line-height:1.6}
+.report-doc .risk-item .ri-ic{color:#ad6800;flex-shrink:0}
+.report-doc .insight{background:#f3f7ff;border:1px solid #d6e2ff;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.85;color:var(--text)}
+.report-doc .empty-state{text-align:center;color:var(--muted);padding:24px 10px;font-size:13px}
+.report-doc .rep-foot{margin-top:22px;padding-top:12px;border-top:1px dashed var(--border);color:var(--muted);font-size:12px;line-height:1.7}
+@media(max-width:760px){.report-doc .rkpis{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
@@ -215,6 +247,7 @@ code{background:#eef1f8;padding:1px 6px;border-radius:5px;font-size:12px;color:#
     <button class="tab active" data-tab="funnel">📊 招聘漏斗 <span class="cnt" id="cntNew"></span></button>
     <button class="tab" data-tab="kanban">🗂️ 候选人看板</button>
     <button class="tab" data-tab="table">📋 候选人明细 <span class="cnt" id="cntAll"></span></button>
+    <button class="tab" data-tab="report">📝 招聘报告</button>
     <button class="tab" data-tab="settings">⚙️ 数据与设置</button>
   </div>
 
@@ -273,6 +306,31 @@ code{background:#eef1f8;padding:1px 6px;border-radius:5px;font-size:12px;color:#
         <button class="btn sm" id="pgNext">下一页</button>
       </div>
     </div>
+  </div>
+
+  <!-- ============ 报告视图 ============ -->
+  <div class="panel" id="panel-report">
+    <div class="card">
+      <div class="card-head">
+        <h3>📝 招聘日报 / 周报生成</h3>
+        <span class="desc">基于看板数据自动生成，可复制 / 导出 / 打印</span>
+        <div class="right">
+          <div class="seg" id="repTypeSeg">
+            <button class="seg-btn active" data-type="daily">日报</button>
+            <button class="seg-btn" data-type="weekly">周报</button>
+          </div>
+        </div>
+      </div>
+      <div class="card-body" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <span class="rep-period" id="repPeriodLabel">—</span>
+        <span style="flex:1"></span>
+        <button class="btn primary" id="btnGenReport">📊 生成报告</button>
+        <button class="btn" id="btnCopyMd">📋 复制 Markdown</button>
+        <button class="btn" id="btnExportReport">⬇️ 导出 HTML</button>
+        <button class="btn" id="btnPrintReport">🖨️ 打印</button>
+      </div>
+    </div>
+    <div id="reportOutput" class="report-doc"></div>
   </div>
 
   <!-- ============ 设置视图 ============ -->
@@ -600,36 +658,57 @@ function shade(hex, amt){
 function funnelMinW(s){
   return Math.max(80, s.name.length*12 + 16, 92);
 }
+/* 圆角梯形 path（顺时针四点，圆角半径 r，自动限制不超邻边一半） */
+function roundTrap(pts, r){
+  const n = pts.length;
+  const sub = (a,b)=>[b[0]-a[0], b[1]-a[1]];
+  const len = v=>Math.hypot(v[0],v[1])||1;
+  const norm = v=>{ const L=len(v); return [v[0]/L, v[1]/L]; };
+  let d = '';
+  for(let i=0;i<n;i++){
+    const p0=pts[(i-1+n)%n], p1=pts[i], p2=pts[(i+1)%n];
+    const v1=norm(sub(p0,p1)), v2=norm(sub(p1,p2));
+    const rr=Math.min(r, len(sub(p0,p1))/2, len(sub(p1,p2))/2);
+    const a=[p1[0]-v1[0]*rr, p1[1]-v1[1]*rr];
+    const b=[p1[0]+v2[0]*rr, p1[1]+v2[1]*rr];
+    d += (i===0?`M ${a[0].toFixed(1)} ${a[1].toFixed(1)} `:`L ${a[0].toFixed(1)} ${a[1].toFixed(1)} `);
+    d += `Q ${p1[0].toFixed(1)} ${p1[1].toFixed(1)} ${b[0].toFixed(1)} ${b[1].toFixed(1)} `;
+  }
+  return d+'Z';
+}
 function renderFunnel(){
   const f = funnelStats();
   const svg = document.getElementById('funnelSvg');
   const W = 640, topW = 320;
-  const H = Math.max(400, 44 + stages.length*40 + 20);
+  const H = Math.max(470, 56 + stages.length*54 + 28);
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   const maxN = Math.max(1, f.total);
-  const stepH = Math.min((H-64)/stages.length, 56);
-  const y0 = 44 + (H-64 - stages.length*stepH)/2;   // 阶段数少时垂直居中
+  const stepH = Math.min((H-72)/stages.length, 60);
+  const y0 = 50 + (H-70 - stages.length*stepH)/2;   // 阶段数少时垂直居中
+  const rR = Math.min(12, stepH*0.2);
 
-  /* defs：每阶段同色系渐变 + 淡色背景轨道渐变 */
-  let defs = '';
+  /* defs：每阶段同色系竖向渐变 + 淡色背景轨道 + 柔和投影 */
+  let defs = `<filter id="fShadow" x="-20%" y="-20%" width="140%" height="170%">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#1e2a44" flood-opacity="0.20"/>
+    </filter>`;
   stages.forEach((s,i)=>{
-    defs += `<linearGradient id="fg${i}" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="${shade(s.color,48)}"/><stop offset="1" stop-color="${shade(s.color,-44)}"/>
+    defs += `<linearGradient id="fg${i}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${shade(s.color,58)}"/><stop offset="1" stop-color="${shade(s.color,-28)}"/>
     </linearGradient>`;
   });
-  defs += `<linearGradient id="fgTrack" x1="0" y1="0" x2="1" y2="1">
+  defs += `<linearGradient id="fgTrack" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0" stop-color="#eef2fa"/><stop offset="1" stop-color="#f8fafd"/>
   </linearGradient>`;
 
   /* 背景轨道（淡色漏斗轮廓，垫底） */
   const bw = topW+30, bx = (W-bw)/2, trackBottom = y0 + stages.length*stepH;
   let html = `<defs>${defs}</defs>
-  <path d="M ${bx} ${y0-4} L ${bx+bw} ${y0-4} L ${bx+bw*0.42} ${trackBottom+8} L ${bx+bw*0.58} ${trackBottom+8} Z" fill="url(#fgTrack)" stroke="#e4eaf6" stroke-width="1"/>`;
+  <path d="M ${bx} ${y0-8} L ${bx+bw} ${y0-8} L ${bx+bw*0.42} ${trackBottom+12} L ${bx+bw*0.58} ${trackBottom+12} Z" fill="url(#fgTrack)" stroke="#e4eaf6" stroke-width="1"/>`;
 
   stages.forEach((s,i)=>{
     const n = f.rows[i].count;
     const w = Math.max(funnelMinW(s), topW*(n/maxN));
-    const y = y0 + i*stepH, h = stepH-12;
+    const y = y0 + i*stepH, h = stepH-16;
     const n2 = i+1<stages.length ? f.rows[i+1].count : 0;
     const s2 = i+1<stages.length ? stages[i+1] : s;
     const nextW = Math.max(funnelMinW(s2), topW*(n2/maxN));
@@ -637,17 +716,26 @@ function renderFunnel(){
     const share = f.total>0 ? n/f.total*100 : 0;
     const conv = i<stages.length-1 ? f.rows[i].conv*100 : null;
     const tip = `${s.name}：${n} 人（${share.toFixed(1)}%）${conv!=null?`，转化率 ${conv.toFixed(1)}%`:''}${f.rows[i].rej>0?`，流失 ${f.rows[i].rej} 人`:''}`;
-    html += `<path class="fseg" d="M ${x} ${y} L ${x+w} ${y} L ${xNext+nextW} ${y+h} L ${xNext} ${y+h} Z" fill="url(#fg${i})" stroke="${shade(s.color,-80)}" stroke-opacity=".35" stroke-width="1"><title>${tip}</title></path>`;
-    html += `<text x="${W/2}" y="${y+h*0.42}" text-anchor="middle" font-size="12" font-weight="700" fill="#fff" style="text-shadow:0 1px 2px rgba(20,30,60,.35)">${s.name}</text>`;
-    html += `<text x="${W/2}" y="${y+h*0.70}" text-anchor="middle" font-size="10.5" fill="rgba(255,255,255,.9)">${n} 人 · ${share.toFixed(1)}%</text>`;
-    /* 阶段间转化率 chip（左侧，不遮挡漏斗） */
+    const pts = [[x,y],[x+w,y],[xNext+nextW,y+h],[xNext,y+h]];
+    html += `<path class="fseg" d="${roundTrap(pts,rR)}" fill="url(#fg${i})" stroke="${shade(s.color,-78)}" stroke-opacity=".4" stroke-width="1" filter="url(#fShadow)"><title>${tip}</title></path>`;
+    /* 顶部高光，增强立体感 */
+    html += `<path d="${roundTrap([[x+7,y+6],[x+w-7,y+6],[xNext+nextW-3,y+h*0.42],[xNext+3,y+h*0.42]],Math.max(3,rR*0.4))}" fill="rgba(255,255,255,.16)" pointer-events="none"/>`;
+    /* 段内两行文字：字号与行位随段高 h 自适应，避免段矮时叠字 */
+    const tName = Math.max(10.5, Math.min(13, h*0.30));
+    const tCnt  = Math.max(9,    Math.min(11, h*0.24));
+    const cyN = y + h*0.40, cyC = y + h*0.75;
+    html += `<text x="${W/2}" y="${cyN.toFixed(1)}" text-anchor="middle" font-size="${tName.toFixed(1)}" font-weight="700" fill="#fff" style="text-shadow:0 1px 3px rgba(20,30,60,.4)">${s.name}</text>`;
+    html += `<text x="${W/2}" y="${cyC.toFixed(1)}" text-anchor="middle" font-size="${tCnt.toFixed(1)}" fill="rgba(255,255,255,.92)">${n} 人 · ${share.toFixed(1)}%</text>`;
+    /* 阶段间转化率胶囊（左侧，圆角 + 虚线连接） */
     if(i < stages.length-1){
       const cy = y+h + (stepH-h)/2;
       const convTxt = conv>0 ? conv.toFixed(1)+'%' : '—';
       const convColor = conv>=0.6 ? '#0b9665' : (conv>=0.3 ? '#b4750a' : '#d63c33');
       const convBg   = conv>=0.6 ? '#e6f7f0' : (conv>=0.3 ? '#fdf3e0' : '#fdecea');
-      html += `<rect x="10" y="${cy-8}" width="42" height="16" rx="8" fill="${convBg}" stroke="rgba(120,140,180,.25)" stroke-width="1"/>`;
-      html += `<text x="31" y="${cy+3.5}" text-anchor="middle" font-size="10" font-weight="700" fill="${convColor}">↓ ${convTxt}</text>`;
+      const cw = 62, cx = 6;
+      html += `<line x1="${cx+cw}" y1="${cy}" x2="${x-8}" y2="${cy}" stroke="rgba(120,140,180,.32)" stroke-width="1" stroke-dasharray="3 3"/>`;
+      html += `<rect x="${cx}" y="${cy-11}" width="${cw}" height="22" rx="11" fill="${convBg}" stroke="rgba(120,140,180,.25)" stroke-width="1"/>`;
+      html += `<text x="${cx+cw/2}" y="${cy+4}" text-anchor="middle" font-size="11" font-weight="700" fill="${convColor}">↓ ${convTxt}</text>`;
     }
   });
   svg.innerHTML = html;
@@ -696,7 +784,7 @@ function renderFunnel(){
     parts.push(`⏳ 当前还有 <b>${f2.counts[stages[0].id]} 人</b>处于「${stages[0].name}」阶段，尽快处理可提升推进效率；`);
   }
   parts.push(`📌 整体转化率（${stages[0].name}→${stages[stages.length-1].name}）为 <b>${(f2.overall*100).toFixed(1)}%</b>，共正式录用 <b>${f2.hired}</b> 人。`);
-  insight.innerHTML = parts.join('<br>');
+  insight.innerHTML = parts.map(p=>`<div class="ins-item">${p}</div>`).join('');
 }
 
 /* ================= 看板 ================= */
@@ -1294,6 +1382,7 @@ function renderPanel(){
   if(ui.tab==='funnel') renderFunnel();
   if(ui.tab==='kanban') renderKanban();
   if(ui.tab==='table') renderTable();
+  if(ui.tab==='report') renderReport();
   if(ui.tab==='settings'){ renderStageConfig(); renderTplEditor(); }
 }
 function renderAll(){ renderKpis(); renderPanel(); }
@@ -1385,6 +1474,262 @@ function toast(msg){
   clearTimeout(toastTimer);
   toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
 }
+
+/* ================= 招聘日报 / 周报 ================= */
+let repType = 'daily';
+let lastReportMD = '';
+
+function reportPeriod(){
+  const now = new Date();
+  if(repType==='daily'){
+    const start = new Date(now.getFullYear(),now.getMonth(),now.getDate(),0,0,0,0).getTime();
+    return { start, end:now.getTime(), label:`${fmtDate(start)}（今日）`, cmpLabel:'昨日' };
+  }
+  const dow = (now.getDay()+6)%7; // 周一=0
+  const mon = new Date(now.getFullYear(),now.getMonth(),now.getDate()-dow,0,0,0,0).getTime();
+  return { start:mon, end:now.getTime(), label:`${fmtDate(mon)} ~ ${fmtDate(now.getTime())}（本周）`, cmpLabel:'上周' };
+}
+function prevPeriod(p){ const len = p.end - p.start; return { start:p.start-len, end:p.start }; }
+function inRange(ts,s,e){ return ts>=s && ts<=e; }
+function deltaHtml(cur,prev){
+  const d = cur-prev;
+  if(d===0) return `<span class="delta">±0</span>`;
+  const cls = d>0?'up':'down';
+  return `<span class="delta ${cls}">${d>0?'+':''}${d}</span>`;
+}
+
+function computeReport(){
+  const p = reportPeriod();
+  const pp = prevPeriod(p);
+  const f = funnelStats();
+  const now = Date.now();
+  const created   = candidates.filter(c=>inRange(c.createdAt, p.start, p.end));
+  const onboard   = candidates.filter(c=>c.status==='onboard' && inRange(c.updatedAt, p.start, p.end));
+  const rejected  = candidates.filter(c=>c.status==='rejected' && inRange(c.updatedAt, p.start, p.end));
+  const advanced  = candidates.filter(c=>inRange(c.updatedAt, p.start, p.end) && !inRange(c.createdAt, p.start, p.end) && c.status!=='rejected');
+  const createdP   = candidates.filter(c=>inRange(c.createdAt, pp.start, pp.end));
+  const onboardP   = candidates.filter(c=>c.status==='onboard' && inRange(c.updatedAt, pp.start, pp.end));
+  const rejectedP  = candidates.filter(c=>c.status==='rejected' && inRange(c.updatedAt, pp.start, pp.end));
+  const advancedP  = candidates.filter(c=>inRange(c.updatedAt, pp.start, pp.end) && !inRange(c.createdAt, pp.start, pp.end) && c.status!=='rejected');
+  const srcMap = {};
+  SRC_LIST.forEach(s=>srcMap[s]={new:0,hired:0});
+  created.forEach(c=>{ const k=c.source||'其他'; (srcMap[k]=srcMap[k]||{new:0,hired:0}).new++; });
+  onboard.forEach(c=>{ const k=c.source||'其他'; (srcMap[k]=srcMap[k]||{new:0,hired:0}).hired++; });
+  const STALL = 7*864e5;
+  const stalled = candidates.filter(c=>c.status!=='rejected'&&c.status!=='onboard'&&(now-c.updatedAt)>STALL)
+    .sort((a,b)=>a.updatedAt-b.updatedAt).slice(0,12);
+  const pendingScreen = candidates.filter(c=>c.status===stages[0].id).length;
+  const worst = stages.slice(0,-1).map((s,i)=>({name:s.name,next:stages[i+1].name,conv:f.rows[i].conv})).sort((a,b)=>a.conv-b.conv)[0];
+  const biggestRej = stages.map((s,i)=>({name:s.name,rej:f.rows[i].rej})).sort((a,b)=>b.rej-a.rej)[0];
+  return { p, pp, f, created, onboard, rejected, advanced, createdP, onboardP, rejectedP, advancedP, srcMap, stalled, pendingScreen, worst, biggestRej, now };
+}
+
+function renderReport(){
+  const d = computeReport();
+  const p = d.p, f = d.f, isWeekly = repType==='weekly';
+  const title = isWeekly ? '招聘周报' : '招聘日报';
+  document.getElementById('repPeriodLabel').textContent = p.label;
+
+  const kpis = [
+    ['候选人总数', f.total, ''],
+    ['流程进行中', f.active, ''],
+    ['本周期新增', d.created.length, isWeekly?`环比 ${deltaHtml(d.created.length,d.createdP.length)}`:'今日'],
+    ['本周期录用', d.onboard.length, isWeekly?`环比 ${deltaHtml(d.onboard.length,d.onboardP.length)}`:''],
+    ['整体转化率', (f.overall*100).toFixed(1), '%'],
+    ['本周期淘汰', d.rejected.length, isWeekly?`环比 ${deltaHtml(d.rejected.length,d.rejectedP.length)}`:''],
+  ];
+  const kpiHtml = kpis.map(([l,n,u])=>`<div class="rkpi"><div class="rl">${l}</div><div class="rn">${n}${u?`<span class="u">${u}</span>`:''}</div></div>`).join('');
+
+  const pr = [
+    ['新增候选人入库', d.created.length, d.createdP.length],
+    ['推进至下一阶段', d.advanced.length, d.advancedP.length],
+    ['正式录用', d.onboard.length, d.onboardP.length],
+    ['淘汰出局', d.rejected.length, d.rejectedP.length],
+  ];
+  const progHtml = `<table class="rtab"><thead><tr><th>关键进展</th><th>本周期</th>${isWeekly?`<th>${p.cmpLabel}</th><th>环比</th>`:''}</tr></thead><tbody>
+    ${pr.map(r=>`<tr><td>${r[0]}</td><td><b>${r[1]}</b></td>${isWeekly?`<td>${r[2]}</td><td>${deltaHtml(r[1],r[2])}</td>`:''}</tr>`).join('')}
+  </tbody></table>`;
+
+  const funnelHtml = `<table class="rtab"><thead><tr><th>阶段</th><th>累计人数</th><th>占比</th><th>转化率</th><th>流失</th></tr></thead><tbody>
+    ${stages.map((s,i)=>{const r=f.rows[i];const share=f.total>0?r.count/f.total*100:0;return `<tr><td>${s.name}</td><td>${r.count}</td><td>${share.toFixed(1)}%</td><td>${(r.conv*100).toFixed(1)}%</td><td>${r.rej||''}</td></tr>`;}).join('')}
+  </tbody></table>`;
+
+  const srcRows = Object.entries(d.srcMap).filter(([k,v])=>v.new>0||v.hired>0).map(([k,v])=>({k,...v})).sort((a,b)=>b.new-a.new);
+  const srcHtml = srcRows.length?`<table class="rtab"><thead><tr><th>渠道</th><th>本周期新增</th><th>占比</th><th>录用</th><th>录用率</th></tr></thead><tbody>
+    ${srcRows.map(r=>`<tr><td>${r.k}</td><td>${r.new}</td><td>${(d.created.length?r.new/d.created.length*100:0).toFixed(0)}%</td><td>${r.hired}</td><td>${r.new?((r.hired/r.new)*100).toFixed(0)+'%':'—'}</td></tr>`).join('')}
+  </tbody></table>`:'<div class="empty-state">本周期暂无新增候选人，无渠道数据</div>';
+
+  const riskHtml = (d.stalled.length||d.pendingScreen>0)
+    ? d.stalled.map(c=>`<div class="risk-item"><span class="ri-ic">⏳</span><div><b>${esc(c.name)}</b> · ${esc(c.position||'')} · 当前阶段 <b>${stageName(c.status)}</b> · 已停留 <b>${Math.floor((d.now-c.updatedAt)/864e5)}</b> 天未推进（更新于 ${fmtDate(c.updatedAt)}）</div></div>`).join('')
+      + (d.pendingScreen>0?`<div class="risk-item"><span class="ri-ic">📥</span><div>当前有 <b>${d.pendingScreen}</b> 人处于「${stages[0].name}」阶段待处理。</div></div>`:'')
+    : '<div class="empty-state">暂无长期停滞的候选人 🎉</div>';
+
+  const ins = [];
+  if(d.worst && d.worst.conv<0.6) ins.push(`🔻 转化瓶颈在 <b>${d.worst.name} → ${d.worst.next}</b> 环节（转化率仅 ${(d.worst.conv*100).toFixed(1)}%），建议优先安排该阶段面试/反馈，缩短决策周期。`);
+  if(d.biggestRej && d.biggestRej.rej>0) ins.push(`⚠️ 流失集中在 <b>${d.biggestRej.name}</b> 阶段（累计 ${d.biggestRej.rej} 人），建议复盘该环节筛选标准与沟通话术。`);
+  if(d.stalled.length) ins.push(`🐢 有 <b>${d.stalled.length}</b> 名候选人停留超 7 天未推进，建议专人跟进或主动沟通，避免人才流失。`);
+  if(d.pendingScreen>0) ins.push(`📥 当前 <b>${d.pendingScreen}</b> 人处于「${stages[0].name}」，尽快初筛可提升整体推进效率。`);
+  ins.push(`📌 整体转化率（${stages[0].name}→${stages[stages.length-1].name}）<b>${(f.overall*100).toFixed(1)}%</b>，累计正式录用 <b>${f.hired}</b> 人。`);
+  const insightHtml = `<div class="insight">${ins.join('<br>')}</div>`;
+
+  const plan = [];
+  if(d.pendingScreen>0) plan.push(`处理「${stages[0].name}」中的 ${d.pendingScreen} 人，完成初筛分流；`);
+  if(d.stalled.length) plan.push(`跟进 ${Math.min(d.stalled.length,5)} 名停滞候选人（${d.stalled.slice(0,3).map(c=>c.name).join('、')}），推动进入下一阶段；`);
+  if(d.worst && d.worst.conv<0.6) plan.push(`重点突破「${d.worst.name}」瓶颈，优化该环节面试安排与反馈时效；`);
+  if(d.biggestRej && d.biggestRej.rej>0) plan.push(`复盘「${d.biggestRej.name}」流失原因，调整筛选标准；`);
+  plan.push(`持续推进在途候选人，补充 ${SRC_LIST.slice(0,3).join('、')} 等渠道简历来源，保障 pipeline 供给。`);
+  const planHtml = `<ul>${plan.map(t=>`<li>${t}</li>`).join('')}</ul>`;
+
+  const out = document.getElementById('reportOutput');
+  out.innerHTML = `
+    <h1>${title}</h1>
+    <div class="rep-meta">统计周期：<b>${p.label}</b> ｜ 生成时间：${fmtTime(Date.now())} ｜ 数据范围：本看板全部 ${f.total} 名候选人（浏览器本地）</div>
+    <h2>一、核心指标概览</h2>
+    <div class="rkpis">${kpiHtml}</div>
+    <h2>二、本周期关键进展</h2>
+    ${progHtml}
+    <h2>三、招聘漏斗快照</h2>
+    ${funnelHtml}
+    <h2>四、渠道效果分析</h2>
+    ${srcHtml}
+    <h2>五、风险与待跟进</h2>
+    ${riskHtml}
+    <h2>六、问题与优化建议</h2>
+    ${insightHtml}
+    <h2>七、${isWeekly?'下周':'明日'}工作计划</h2>
+    ${planHtml}
+    <div class="rep-foot">说明：本报告中「本周期新增」以候选人创建时间（uploadAt/createdAt）统计；「推进/录用/淘汰」以最近更新时间（updatedAt）在统计周期内判定，属近似口径。数据均来自浏览器本地，未上传服务器。</div>
+  `;
+  out.classList.add('show');
+  lastReportMD = buildMarkdown({title,p,d,f,isWeekly,pr});
+}
+
+function buildMarkdown({title,p,d,f,isWeekly,pr}){
+  const L = [];
+  L.push(`# ${title}`);
+  L.push('');
+  L.push(`> 统计周期：**${p.label}** ｜ 生成时间：${fmtTime(Date.now())} ｜ 数据范围：本看板全部 ${f.total} 名候选人`);
+  L.push('');
+  L.push(`## 一、核心指标概览`);
+  L.push('');
+  L.push(`- 候选人总数：**${f.total}**`);
+  L.push(`- 流程进行中：**${f.active}**`);
+  L.push(`- 本周期新增：**${d.created.length}**${isWeekly?` （${p.cmpLabel} ${d.createdP.length}）`:''}`);
+  L.push(`- 本周期录用：**${d.onboard.length}**${isWeekly?` （${p.cmpLabel} ${d.onboardP.length}）`:''}`);
+  L.push(`- 整体转化率：**${(f.overall*100).toFixed(1)}%**`);
+  L.push(`- 本周期淘汰：**${d.rejected.length}**${isWeekly?` （${p.cmpLabel} ${d.rejectedP.length}）`:''}`);
+  L.push('');
+  L.push(`## 二、本周期关键进展`);
+  L.push('');
+  L.push(`| 关键进展 | 本周期${isWeekly?` | ${p.cmpLabel} | 环比`:''} |`);
+  L.push(`| --- | ---${isWeekly?' | --- | ---':''} |`);
+  pr.forEach(r=>{ L.push(isWeekly?`| ${r[0]} | ${r[1]} | ${r[2]} | ${r[1]-r[2]>=0?'+':''}${r[1]-r[2]} |`:`| ${r[0]} | ${r[1]} |`); });
+  L.push('');
+  L.push(`## 三、招聘漏斗快照`);
+  L.push('');
+  L.push(`| 阶段 | 累计人数 | 占比 | 转化率 | 流失 |`);
+  L.push(`| --- | --- | --- | --- | --- |`);
+  stages.forEach((s,i)=>{const r=f.rows[i];const share=f.total>0?r.count/f.total*100:0;L.push(`| ${s.name} | ${r.count} | ${share.toFixed(1)}% | ${(r.conv*100).toFixed(1)}% | ${r.rej||''} |`);});
+  L.push('');
+  const srcRows = Object.entries(d.srcMap).filter(([k,v])=>v.new>0||v.hired>0).map(([k,v])=>({k,...v})).sort((a,b)=>b.new-a.new);
+  if(srcRows.length){
+    L.push(`## 四、渠道效果分析`);
+    L.push('');
+    L.push(`| 渠道 | 本周期新增 | 占比 | 录用 | 录用率 |`);
+    L.push(`| --- | --- | --- | --- | --- |`);
+    srcRows.forEach(r=>L.push(`| ${r.k} | ${r.new} | ${(d.created.length?r.new/d.created.length*100:0).toFixed(0)}% | ${r.hired} | ${r.new?((r.hired/r.new)*100).toFixed(0)+'%':'—'} |`));
+    L.push('');
+  }
+  L.push(`## 五、风险与待跟进`);
+  L.push('');
+  if(d.stalled.length){ d.stalled.forEach(c=>L.push(`- ⏳ **${c.name}**（${c.position||''}）：当前「${stageName(c.status)}」，已停留 ${Math.floor((d.now-c.updatedAt)/864e5)} 天未推进`)); }
+  if(d.pendingScreen>0) L.push(`- 📥 当前 ${d.pendingScreen} 人处于「${stages[0].name}」待处理`);
+  if(!d.stalled.length && !d.pendingScreen) L.push(`- 暂无长期停滞候选人 🎉`);
+  L.push('');
+  L.push(`## 六、问题与优化建议`);
+  L.push('');
+  const ins=[];
+  if(d.worst && d.worst.conv<0.6) ins.push(`- 🔻 转化瓶颈在 **${d.worst.name} → ${d.worst.next}** 环节（转化率仅 ${(d.worst.conv*100).toFixed(1)}%），建议优先安排该阶段面试/反馈。`);
+  if(d.biggestRej && d.biggestRej.rej>0) ins.push(`- ⚠️ 流失集中在 **${d.biggestRej.name}** 阶段（累计 ${d.biggestRej.rej} 人），建议复盘筛选标准与话术。`);
+  if(d.stalled.length) ins.push(`- 🐢 ${d.stalled.length} 名候选人停留超 7 天，建议专人跟进。`);
+  if(d.pendingScreen>0) ins.push(`- 📥 ${d.pendingScreen} 人待初筛，尽快分流。`);
+  ins.push(`- 📌 整体转化率 **${(f.overall*100).toFixed(1)}%**，累计录用 ${f.hired} 人。`);
+  L.push(...ins);
+  L.push('');
+  L.push(`## 七、${isWeekly?'下周':'明日'}工作计划`);
+  L.push('');
+  const plan=[];
+  if(d.pendingScreen>0) plan.push(`- 处理「${stages[0].name}」中的 ${d.pendingScreen} 人，完成初筛分流；`);
+  if(d.stalled.length) plan.push(`- 跟进 ${Math.min(d.stalled.length,5)} 名停滞候选人（${d.stalled.slice(0,3).map(c=>c.name).join('、')}），推动进入下一阶段；`);
+  if(d.worst && d.worst.conv<0.6) plan.push(`- 重点突破「${d.worst.name}」瓶颈，优化面试安排与反馈时效；`);
+  if(d.biggestRej && d.biggestRej.rej>0) plan.push(`- 复盘「${d.biggestRej.name}」流失原因，调整筛选标准；`);
+  plan.push(`- 持续推进在途候选人，补充简历来源保障 pipeline 供给。`);
+  L.push(...plan);
+  L.push('');
+  L.push(`---`);
+  L.push(`*说明：本报告中「本周期新增」以候选人创建时间统计；「推进/录用/淘汰」以最近更新时间在统计周期内判定，属近似口径。数据均来自浏览器本地，未上传服务器。*`);
+  return L.join('\n');
+}
+
+function mdToHtml(md){
+  const lines = md.split('\n');
+  let html='', i=0;
+  const inline = (s)=> s.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/`(.+?)`/g,'<code>$1</code>');
+  while(i<lines.length){
+    const line = lines[i];
+    if(line.startsWith('## ')){ html+=`<h2>${inline(line.slice(3))}</h2>`; i++; continue; }
+    if(line.startsWith('# ')){ html+=`<h1>${inline(line.slice(2))}</h1>`; i++; continue; }
+    if(line.startsWith('> ')){ html+=`<blockquote>${inline(line.slice(2))}</blockquote>`; i++; continue; }
+    if(line.trim()==='---'){ html+='<hr>'; i++; continue; }
+    if(line.startsWith('|')){
+      const rows=[];
+      while(i<lines.length && lines[i].startsWith('|')){ rows.push(lines[i]); i++; }
+      const dataRows = rows.filter(r=>!/^\s*\|?\s*-{2,}/.test(r));
+      html+='<table>'+dataRows.map((r,idx)=>{
+        const cells=r.replace(/^\||\|$/g,'').split('|').map(c=>c.trim());
+        const tag = idx===0?'th':'td';
+        return '<tr>'+cells.map(c=>`<${tag}>${inline(c)}</${tag}>`).join('')+'</tr>';
+      }).join('')+'</table>';
+      continue;
+    }
+    if(line.startsWith('- ')){ html+='<ul>'; while(i<lines.length && lines[i].startsWith('- ')){ html+=`<li>${inline(lines[i].slice(2))}</li>`; i++; } html+='</ul>'; continue; }
+    if(line.trim()===''){ i++; continue; }
+    html+=`<p>${inline(line)}</p>`; i++;
+  }
+  return html;
+}
+
+/* 报告事件绑定 */
+document.getElementById('repTypeSeg').addEventListener('click', e=>{
+  const b = e.target.closest('.seg-btn'); if(!b) return;
+  repType = b.dataset.type;
+  document.querySelectorAll('#repTypeSeg .seg-btn').forEach(x=>x.classList.toggle('active',x===b));
+  renderReport();
+});
+document.getElementById('btnGenReport').addEventListener('click', renderReport);
+document.getElementById('btnCopyMd').addEventListener('click', ()=>{
+  if(!lastReportMD) renderReport();
+  const txt = lastReportMD;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(()=>toast('已复制 Markdown 到剪贴板')).catch(()=>fallbackCopy(txt));
+  } else fallbackCopy(txt);
+  function fallbackCopy(t){ const ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy'); toast('已复制 Markdown');}catch(e){toast('复制失败，请手动选择');} ta.remove(); }
+});
+document.getElementById('btnExportReport').addEventListener('click', ()=>{
+  if(!lastReportMD) renderReport();
+  const title = repType==='weekly'?'招聘周报':'招聘日报';
+  const html = `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><title>${title}</title><style>body{font-family:system-ui,"PingFang SC","Microsoft YaHei",sans-serif;max-width:820px;margin:40px auto;padding:0 20px;color:#1e2a44;line-height:1.7}h1{border-bottom:3px solid #3b6ef6;padding-bottom:8px}h2{margin-top:28px;color:#3b6ef6}table{border-collapse:collapse;width:100%;margin:10px 0;font-size:14px}th,td{border:1px solid #e5e9f2;padding:8px 10px;text-align:left}th{background:#f7f9fd}blockquote{color:#5c6b8a;border-left:4px solid #3b6ef6;padding-left:12px;margin:8px 0}code{background:#f2f5fb;padding:1px 6px;border-radius:4px}</style></head><body>${mdToHtml(lastReportMD)}</body></html>`;
+  download(`${title}-${fmtDate(Date.now())}.html`, html);
+  toast('已导出 HTML');
+});
+document.getElementById('btnPrintReport').addEventListener('click', ()=>{
+  if(!lastReportMD) renderReport();
+  const w = window.open('','_blank');
+  if(!w){ toast('浏览器拦截了打印窗口，请允许弹窗后重试'); return; }
+  w.document.write(`<html><head><meta charset="utf-8"><title>招聘报告</title><style>body{font-family:system-ui,"PingFang SC","Microsoft YaHei",sans-serif;max-width:820px;margin:30px auto;padding:0 20px;color:#1e2a44;line-height:1.7}h1{border-bottom:3px solid #3b6ef6;padding-bottom:8px}h2{margin-top:26px;color:#3b6ef6}table{border-collapse:collapse;width:100%;margin:10px 0}th,td{border:1px solid #ddd;padding:7px 9px}th{background:#f7f9fd}blockquote{color:#5c6b8a;border-left:4px solid #3b6ef6;padding-left:12px}@media print{body{margin:0}}</style></head><body>${mdToHtml(lastReportMD)}</body></html>`);
+  w.document.close();
+  setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} }, 350);
+});
 
 /* ================= 初始化 ================= */
 saveStages();
