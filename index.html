@@ -74,6 +74,7 @@ main{max-width:1280px;margin:0 auto;padding:20px 24px 60px}
 @media(max-width:960px){.funnel-wrap{grid-template-columns:1fr}}
 .funnel-svg{width:100%;height:auto;display:block;overflow:visible}
 .funnel-svg text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;pointer-events:none}
+/* 不加入场动画：自动刷新会周期性重渲染漏斗，动画反复重放会造成闪烁 */
 .funnel-svg .fseg{cursor:pointer;transition:filter .2s ease,transform .2s ease;transform-box:fill-box;transform-origin:center}
 .funnel-svg .fseg:hover{filter:brightness(1.07);transform:translateY(-2px)}
 .funnel-legend{display:flex;flex-wrap:wrap;gap:10px 12px;margin-top:18px;padding-top:15px;border-top:1px dashed var(--border)}
@@ -111,6 +112,10 @@ main{max-width:1280px;margin:0 auto;padding:20px 24px 60px}
 .kcol-head i{width:9px;height:9px;border-radius:3px}
 .kcol-head .kcnt{margin-left:auto;background:#fff;border:1px solid var(--border);color:var(--sub);font-size:11px;padding:1px 8px;border-radius:20px}
 .kcard{background:#fff;border:1px solid var(--border);border-radius:10px;padding:11px 12px;margin-bottom:9px;cursor:pointer;transition:.15s;box-shadow:0 1px 2px rgba(30,42,68,.05);position:relative}
+.kcard:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(30,42,68,.10)}
+.kcard.dragging{opacity:.45;transform:scale(.97);box-shadow:0 8px 20px rgba(30,42,68,.18);cursor:grabbing}
+.kcol.drag-over{outline:2px dashed var(--primary);outline-offset:2px;background:#e8effd}
+.kcol.drag-over .kdrop-zone{min-height:60px}
 .kcard:hover{box-shadow:0 4px 14px rgba(30,42,68,.12);transform:translateY(-1px);border-color:#c9d4ee}
 .kcard .kname{font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:6px}
 .kcard .kpos{font-size:12px;color:var(--primary);font-weight:600;margin-top:1px}
@@ -207,6 +212,8 @@ code{background:#eef1f8;padding:1px 6px;border-radius:5px;font-size:12px;color:#
 .report-doc .empty-state{text-align:center;color:var(--muted);padding:24px 10px;font-size:13px}
 .report-doc .rep-foot{margin-top:22px;padding-top:12px;border-top:1px dashed var(--border);color:var(--muted);font-size:12px;line-height:1.7}
 @media(max-width:760px){.report-doc .rkpis{grid-template-columns:repeat(2,1fr)}}
+/* 界面版本标记：用于确认浏览器是否已加载最新构建（看不到该标记/仍是旧号 = 未更新或被缓存） */
+.ver-tag{font-size:11px;font-weight:700;color:#fff;background:linear-gradient(135deg,#3b6ef6,#6d96ff);padding:3px 10px;border-radius:20px;letter-spacing:.3px;box-shadow:0 2px 8px rgba(59,110,246,.28);white-space:nowrap}
 </style>
 </head>
 <body>
@@ -218,6 +225,7 @@ code{background:#eef1f8;padding:1px 6px;border-radius:5px;font-size:12px;color:#
       <div>招聘流程阶段面板<small>Recruitment Pipeline · 候选人状态 & 漏斗自动化</small></div>
     </div>
     <div class="top-actions">
+      <span class="ver-tag" title="界面版本号：若这里没有显示 UI v3，说明浏览器仍在用旧文件（Ctrl+F5 强制刷新，或重新上传 index.html）">UI v3 · 09-14</span>
       <span class="sync-ind"><span class="dot" id="syncDot"></span><span id="syncText">数据已同步</span></span>
       <label class="btn sm" style="cursor:pointer"><input type="checkbox" id="autoRefresh" style="accent-color:var(--primary);margin-right:4px" checked>自动刷新</label>
       <button class="btn sm primary" id="btnResumeImport" title="解析 Word/PDF 简历自动创建候选人">📄 导入简历</button>
@@ -315,6 +323,10 @@ code{background:#eef1f8;padding:1px 6px;border-radius:5px;font-size:12px;color:#
         <h3>📝 招聘日报 / 周报生成</h3>
         <span class="desc">基于看板数据自动生成，可复制 / 导出 / 打印</span>
         <div class="right">
+          <div class="seg" id="repModeSeg" title="日报呈现方式">
+            <button class="seg-btn active" data-mode="card">卡片</button>
+            <button class="seg-btn" data-mode="text">文字</button>
+          </div>
           <div class="seg" id="repTypeSeg">
             <button class="seg-btn active" data-type="daily">日报</button>
             <button class="seg-btn" data-type="weekly">周报</button>
@@ -343,6 +355,7 @@ code{background:#eef1f8;padding:1px 6px;border-radius:5px;font-size:12px;color:#
           <div id="stageConfig"></div>
           <button class="btn sm" id="btnAddStage">＋ 添加阶段</button>
           <button class="btn sm primary" id="btnSaveStages">保存阶段配置</button>
+          <button class="btn sm ghost" id="btnResetStages" title="恢复为内置默认阶段（含背景调查），可修复「推进」断链">恢复默认阶段</button>
         </div>
       </div>
     </div>
@@ -475,18 +488,37 @@ const EDU_LIST = ['大专','本科','硕士','博士'];
 const SRC_LIST = ['BOSS直聘','主动搜索','内推','猎头','官网','其他'];
 
 /* ---- 状态 ---- */
+/* 注意：必须在 `let stages = loadStages()` 之前声明——loadStages 在初始化阶段就会被
+   调用，若此变量尚处 TDZ，赋值会抛 ReferenceError 并被 loadStages 的 catch 静默吞掉。 */
+let stagesAutoRepaired = false;
 let stages = loadStages();
 let candidates = loadCandidates();
 let ui = { tab:'funnel', filter:{keyword:'',status:'',edu:'',source:'',expMin:null}, sort:{key:'updatedAt',dir:-1}, page:1, pageSize:20 };
 
 /* ================= 持久化 ================= */
+/* 校验已保存的阶段配置是否可用：必须包含全部默认阶段（如「背景调查 background」），
+   且默认阶段保持相对顺序。否则（旧版本缺 background / 被挪到 onboard 之后）会导致
+   「终试→背景调查」这类推进断链、点「推进」直接跳过中间阶段。 */
+function stagesValid(s){
+  if(!Array.isArray(s) || s.length<2) return false;
+  if(!DEFAULT_STAGES.every(d=>s.some(x=>x.id===d.id))) return false;   // 缺任一默认阶段即作废
+  const idx = id=>s.findIndex(x=>x.id===id);
+  const first = idx(DEFAULT_STAGES[0].id);
+  /* 默认阶段必须在配置中「连续且有序」出现：
+     仅要求"顺序正确"仍不够——若在「终试」与「背景调查」之间插了自定义阶段，
+     「终试」点推进会跳到该自定义阶段，表现为"推进不到背景调查"。故要求连续。 */
+  for(let i=0;i<DEFAULT_STAGES.length;i++){
+    if(idx(DEFAULT_STAGES[i].id) !== first+i) return false;
+  }
+  return true;
+}
 function loadStages(){
   try{
     const raw = localStorage.getItem(STORE_KEY+'_stages');
     if(raw){
       const s = JSON.parse(raw);
-      // 仅接受包含「正式录用(onboard)」的新版流程配置，旧版配置自动作废
-      if(Array.isArray(s) && s.length && s.some(x=>x.id==='onboard')) return s;
+      if(stagesValid(s)) return s;   // 配置合法则沿用；否则回退默认（自动修复推进断链）
+      stagesAutoRepaired = true;     // 记住"曾自动修复"，初始化后提示用户
     }
   }catch(e){}
   return structuredClone(DEFAULT_STAGES);
@@ -654,9 +686,12 @@ function shade(hex, amt){
   r=Math.max(0,Math.min(255,r)); g=Math.max(0,Math.min(255,g)); b=Math.max(0,Math.min(255,b));
   return '#'+((r<<16)|(g<<8)|b).toString(16).padStart(6,'0');
 }
-/* 最小条宽：容纳两行文字（阶段名 12px/字 + 「N 人 · 占比」），防止末尾人数少的阶段条宽过窄 */
+/* 最小条宽：保证段内两行文字（阶段名 / 「N 人 · X%」）都有余量放得下，
+   避免漏斗收窄到底部时文字顶边、挤出形状。 */
 function funnelMinW(s){
-  return Math.max(80, s.name.length*12 + 16, 92);
+  const nameW = s.name.length * 14 + 30;   // 阶段名（约 14px/字）+ 左右内边距
+  const cntW  = 100;                       // 「121 人 · 100.0%」所需宽度
+  return Math.max(108, nameW, cntW);
 }
 /* 圆角梯形 path（顺时针四点，圆角半径 r，自动限制不超邻边一半） */
 function roundTrap(pts, r){
@@ -679,13 +714,17 @@ function roundTrap(pts, r){
 function renderFunnel(){
   const f = funnelStats();
   const svg = document.getElementById('funnelSvg');
-  const W = 640, topW = 320;
-  const H = Math.max(470, 56 + stages.length*54 + 28);
+  /* 版面：左侧预留转化率胶囊槽（GUT），其余横向空间给漏斗本体。
+     viewBox 越窄 ⇒ 同样卡片宽度下按比例放得越大、文字越清晰。 */
+  const W = 560, GUT = 88;
+  const topW = Math.min(W - GUT - 12, 384);
+  const cx = GUT + (W - GUT)/2;                     // 漏斗中轴（居中于右侧可用区）
+  const H = Math.max(480, 58 + stages.length*56 + 28);
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   const maxN = Math.max(1, f.total);
   const stepH = Math.min((H-72)/stages.length, 60);
-  const y0 = 50 + (H-70 - stages.length*stepH)/2;   // 阶段数少时垂直居中
-  const rR = Math.min(12, stepH*0.2);
+  const y0 = 52 + (H-70 - stages.length*stepH)/2;   // 阶段数少时垂直居中
+  const rR = Math.min(14, stepH*0.26);
 
   /* defs：每阶段同色系竖向渐变 + 淡色背景轨道 + 柔和投影 */
   let defs = `<filter id="fShadow" x="-20%" y="-20%" width="140%" height="170%">
@@ -700,19 +739,23 @@ function renderFunnel(){
     <stop offset="0" stop-color="#eef2fa"/><stop offset="1" stop-color="#f8fafd"/>
   </linearGradient>`;
 
-  /* 背景轨道（淡色漏斗轮廓，垫底） */
-  const bw = topW+30, bx = (W-bw)/2, trackBottom = y0 + stages.length*stepH;
+  /* 背景轨道（淡色漏斗轮廓，垫底）：以 cx 对齐漏斗中轴，底宽跟随最后一段，避免下方多出尖角 */
+  const lastIdx = stages.length-1;
+  const lastW = Math.min(topW+20, Math.max(funnelMinW(stages[lastIdx]), topW*(f.rows[lastIdx].count/maxN)));
+  const bw = topW+28, bx = cx-bw/2;
+  const trackBottom = y0 + lastIdx*stepH + (stepH-18);   // 对齐到最后一段底边
+  const tw = lastW+28;
   let html = `<defs>${defs}</defs>
-  <path d="M ${bx} ${y0-8} L ${bx+bw} ${y0-8} L ${bx+bw*0.42} ${trackBottom+12} L ${bx+bw*0.58} ${trackBottom+12} Z" fill="url(#fgTrack)" stroke="#e4eaf6" stroke-width="1"/>`;
+  <path d="M ${bx} ${y0-8} L ${bx+bw} ${y0-8} L ${cx+tw/2} ${trackBottom+8} L ${cx-tw/2} ${trackBottom+8} Z" fill="url(#fgTrack)" stroke="#e4eaf6" stroke-width="1"/>`;
 
   stages.forEach((s,i)=>{
     const n = f.rows[i].count;
-    const w = Math.max(funnelMinW(s), topW*(n/maxN));
-    const y = y0 + i*stepH, h = stepH-16;
+    const w = Math.min(topW+20, Math.max(funnelMinW(s), topW*(n/maxN)));   // 上限兜底：防阶段名超长时条宽反超顶层
+    const y = y0 + i*stepH, h = stepH-18;
     const n2 = i+1<stages.length ? f.rows[i+1].count : 0;
     const s2 = i+1<stages.length ? stages[i+1] : s;
-    const nextW = Math.max(funnelMinW(s2), topW*(n2/maxN));
-    const x = (W-w)/2, xNext = (W-nextW)/2;
+    const nextW = Math.min(topW+20, Math.max(funnelMinW(s2), topW*(n2/maxN)));
+    const x = cx-w/2, xNext = cx-nextW/2;
     const share = f.total>0 ? n/f.total*100 : 0;
     const conv = i<stages.length-1 ? f.rows[i].conv*100 : null;
     const tip = `${s.name}：${n} 人（${share.toFixed(1)}%）${conv!=null?`，转化率 ${conv.toFixed(1)}%`:''}${f.rows[i].rej>0?`，流失 ${f.rows[i].rej} 人`:''}`;
@@ -720,22 +763,22 @@ function renderFunnel(){
     html += `<path class="fseg" d="${roundTrap(pts,rR)}" fill="url(#fg${i})" stroke="${shade(s.color,-78)}" stroke-opacity=".4" stroke-width="1" filter="url(#fShadow)"><title>${tip}</title></path>`;
     /* 顶部高光，增强立体感 */
     html += `<path d="${roundTrap([[x+7,y+6],[x+w-7,y+6],[xNext+nextW-3,y+h*0.42],[xNext+3,y+h*0.42]],Math.max(3,rR*0.4))}" fill="rgba(255,255,255,.16)" pointer-events="none"/>`;
-    /* 段内两行文字：字号与行位随段高 h 自适应，避免段矮时叠字 */
-    const tName = Math.max(10.5, Math.min(13, h*0.30));
-    const tCnt  = Math.max(9,    Math.min(11, h*0.24));
-    const cyN = y + h*0.40, cyC = y + h*0.75;
-    html += `<text x="${W/2}" y="${cyN.toFixed(1)}" text-anchor="middle" font-size="${tName.toFixed(1)}" font-weight="700" fill="#fff" style="text-shadow:0 1px 3px rgba(20,30,60,.4)">${s.name}</text>`;
-    html += `<text x="${W/2}" y="${cyC.toFixed(1)}" text-anchor="middle" font-size="${tCnt.toFixed(1)}" fill="rgba(255,255,255,.92)">${n} 人 · ${share.toFixed(1)}%</text>`;
+    /* 段内两行文字：字号与行位随段高 h 自适应（行距恒 > 字号，杜绝叠字） */
+    const tName = Math.max(11.5, Math.min(14.5, h*0.32));
+    const tCnt  = Math.max(10,   Math.min(12,   h*0.26));
+    const cyN = y + h*0.38, cyC = y + h*0.78;
+    html += `<text x="${cx}" y="${cyN.toFixed(1)}" text-anchor="middle" font-size="${tName.toFixed(1)}" font-weight="700" fill="#fff" style="text-shadow:0 1px 3px rgba(20,30,60,.45)">${s.name}</text>`;
+    html += `<text x="${cx}" y="${cyC.toFixed(1)}" text-anchor="middle" font-size="${tCnt.toFixed(1)}" fill="rgba(255,255,255,.94)">${n} 人 · ${share.toFixed(1)}%</text>`;
     /* 阶段间转化率胶囊（左侧，圆角 + 虚线连接） */
     if(i < stages.length-1){
       const cy = y+h + (stepH-h)/2;
       const convTxt = conv>0 ? conv.toFixed(1)+'%' : '—';
       const convColor = conv>=0.6 ? '#0b9665' : (conv>=0.3 ? '#b4750a' : '#d63c33');
       const convBg   = conv>=0.6 ? '#e6f7f0' : (conv>=0.3 ? '#fdf3e0' : '#fdecea');
-      const cw = 62, cx = 6;
-      html += `<line x1="${cx+cw}" y1="${cy}" x2="${x-8}" y2="${cy}" stroke="rgba(120,140,180,.32)" stroke-width="1" stroke-dasharray="3 3"/>`;
-      html += `<rect x="${cx}" y="${cy-11}" width="${cw}" height="22" rx="11" fill="${convBg}" stroke="rgba(120,140,180,.25)" stroke-width="1"/>`;
-      html += `<text x="${cx+cw/2}" y="${cy+4}" text-anchor="middle" font-size="11" font-weight="700" fill="${convColor}">↓ ${convTxt}</text>`;
+      const cw = 74, pcx = 6;
+      html += `<line x1="${pcx+cw}" y1="${cy}" x2="${x-9}" y2="${cy}" stroke="rgba(120,140,180,.34)" stroke-width="1" stroke-dasharray="3 3"/>`;
+      html += `<rect x="${pcx}" y="${cy-13}" width="${cw}" height="26" rx="13" fill="${convBg}" stroke="rgba(120,140,180,.28)" stroke-width="1"/>`;
+      html += `<text x="${pcx+cw/2}" y="${cy+4.5}" text-anchor="middle" font-size="12" font-weight="700" fill="${convColor}">↓ ${convTxt}</text>`;
     }
   });
   svg.innerHTML = html;
@@ -788,6 +831,7 @@ function renderFunnel(){
 }
 
 /* ================= 看板 ================= */
+let dragCandId = null;   // 正在被拖拽的候选人 id
 function renderKanban(){
   const cols = [...stages, REJECTED];
   const kb = document.getElementById('kanban');
@@ -798,10 +842,54 @@ function renderKanban(){
       <div class="kdrop-zone">${list.map(c=>kcard(c,col)).join('') || '<div class="kempty">暂无候选人</div>'}</div>
     </div>`;
   }).join('');
-  // 卡片点击
+  // 卡片点击（点「推进 / 淘汰」按钮时不弹编辑窗）
   kb.querySelectorAll('.kcard').forEach(el=>{
-    el.addEventListener('click', ()=>openModal(el.dataset.id));
+    el.addEventListener('click', e=>{
+      if(e.target.closest('[data-act]')) return;
+      openModal(el.dataset.id);
+    });
+    // 拖拽移动：把卡片拖到任意阶段列即改变状态
+    el.draggable = true;
+    el.addEventListener('dragstart', e=>{
+      dragCandId = el.dataset.id;
+      el.classList.add('dragging');
+      try{ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain', el.dataset.id); }catch(_){}
+    });
+    el.addEventListener('dragend', ()=>{
+      el.classList.remove('dragging');
+      kb.querySelectorAll('.kcol').forEach(c=>c.classList.remove('drag-over'));
+      dragCandId = null;
+    });
   });
+  // 列作为放置目标
+  kb.querySelectorAll('.kcol').forEach(col=>{
+    col.addEventListener('dragover', e=>{
+      if(!dragCandId) return;
+      e.preventDefault();
+      try{ e.dataTransfer.dropEffect='move'; }catch(_){}
+      col.classList.add('drag-over');
+    });
+    col.addEventListener('dragleave', ()=>col.classList.remove('drag-over'));
+    col.addEventListener('drop', e=>{
+      e.preventDefault();
+      col.classList.remove('drag-over');
+      let id = dragCandId;
+      try{ id = id || e.dataTransfer.getData('text/plain'); }catch(_){}
+      if(id) moveToStage(id, col.dataset.col);
+    });
+  });
+}
+/* 把候选人移动到指定阶段（拖拽落位 / 供其他入口复用） */
+function moveToStage(id, stageId){
+  const c = candidates.find(x=>x.id===id); if(!c) return;
+  if(stageId===REJECTED.id){ rejectCand(id); return; }
+  if(!stages.some(s=>s.id===stageId)) { toast('该阶段不存在'); return; }
+  if(c.status===stageId) return;
+  c.prevStatus = c.status;
+  if(stageId===REJECTED.id) c.rejectedStage = c.prevStatus;
+  c.status = stageId;
+  c.updatedAt = Date.now();
+  saveCandidates(); renderAll(); toast(`已将 ${c.name} 移动至「${stageName(stageId)}」`);
 }
 function kcard(c,col){
   const isRej = col.id==='rejected';
@@ -1340,6 +1428,10 @@ document.getElementById('btnSaveStages').addEventListener('click', ()=>{
   });
   saveStages(); renderAll(); toast('阶段配置已保存');
 });
+document.getElementById('btnResetStages').addEventListener('click', ()=>{
+  if(!confirm('确定恢复为默认阶段配置？自定义的阶段名称/颜色将被重置（候选人数据不受影响）。\n若之前「终试」点推进直接跳到「Offer」、跳过了「背景调查」，恢复默认即可修复。')) return;
+  stages = structuredClone(DEFAULT_STAGES); saveStages(); renderAll(); toast('已恢复默认阶段配置');
+});
 document.getElementById('stageConfig').addEventListener('click', e=>{
   const del = e.target.closest('.sdel'); if(!del) return;
   const i = +del.dataset.i;
@@ -1477,6 +1569,7 @@ function toast(msg){
 
 /* ================= 招聘日报 / 周报 ================= */
 let repType = 'daily';
+let repMode = 'card'; // card=卡片模式  text=文字模式
 let lastReportMD = '';
 
 function reportPeriod(){
@@ -1529,6 +1622,14 @@ function renderReport(){
   const p = d.p, f = d.f, isWeekly = repType==='weekly';
   const title = isWeekly ? '招聘周报' : '招聘日报';
   document.getElementById('repPeriodLabel').textContent = p.label;
+  // 日报只需聚焦「今日做了什么」，避免 7 段式分析冗长；周报保留完整分析。
+  if(!isWeekly){
+    if(repMode==='text') renderDailyText(d, p, f);
+    else renderDailySimple(d, p, f);
+    return;
+  }
+  // 周报同样支持文字模式
+  if(isWeekly && repMode==='text'){ renderWeeklyText(d, p, f); return; }
 
   const kpis = [
     ['候选人总数', f.total, ''],
@@ -1602,6 +1703,229 @@ function renderReport(){
   `;
   out.classList.add('show');
   lastReportMD = buildMarkdown({title,p,d,f,isWeekly,pr});
+}
+
+/* 日报：只聚焦「今日做了什么」，精简为「今日完成 / 进展明细 / 当前概览」三段 */
+function renderDailySimple(d, p, f){
+  const k = (l,n)=>`<div class="rkpi"><div class="rl">${l}</div><div class="rn">${n}</div></div>`;
+  const seen = new Set(), items = [];
+  [...d.onboard, ...d.rejected, ...d.advanced, ...d.created]
+    .sort((a,b)=>b.updatedAt-a.updatedAt)
+    .forEach(c=>{ if(c && !seen.has(c.id)){ seen.add(c.id); items.push(c); } });
+  const detailHtml = items.length ? items.map(c=>{
+    let act;
+    if(d.onboard.some(x=>x.id===c.id)) act='🎉 正式录用';
+    else if(d.rejected.some(x=>x.id===c.id)) act='🗑️ 淘汰出局';
+    else if(d.created.some(x=>x.id===c.id) && !d.advanced.some(x=>x.id===c.id)) act='🆕 新入库';
+    else if(d.advanced.some(x=>x.id===c.id)) act = c.prevStatus ? `➡️ 推进至「${stageName(c.status)}」（原 ${stageName(c.prevStatus)}）` : `➡️ 推进至「${stageName(c.status)}」`;
+    return `<div class="risk-item"><span class="ri-ic">•</span><div><b>${esc(c.name)}</b> · ${esc(c.position||'')} · ${act}</div></div>`;
+  }).join('') : '<div class="empty-state">今日暂无候选人动态</div>';
+  const out = document.getElementById('reportOutput');
+  out.innerHTML = `
+    <h1>招聘日报</h1>
+    <div class="rep-meta">统计周期：<b>${p.label}</b> ｜ 生成时间：${fmtTime(Date.now())} ｜ 数据范围：本看板全部 ${f.total} 名候选人</div>
+    <h2>今日完成</h2>
+    <div class="rkpis">${k('🆕 新增入库', d.created.length)}${k('➡️ 推进阶段', d.advanced.length)}${k('🎉 正式录用', d.onboard.length)}${k('🗑️ 淘汰出局', d.rejected.length)}</div>
+    <h2>今日进展明细</h2>
+    ${detailHtml}
+    <h2>当前概览</h2>
+    <div class="insight">进行中 <b>${f.active}</b> 人 ｜ 候选人总池 <b>${f.total}</b> 人 ｜ 整体转化率（${stages[0].name}→${stages[stages.length-1].name}）<b>${(f.overall*100).toFixed(1)}%</b></div>
+    <div class="rep-foot">说明：以候选人创建/最近更新时间在「今日」范围内统计，属近似口径；数据来自浏览器本地，未上传服务器。</div>
+  `;
+  out.classList.add('show');
+  lastReportMD = buildDailyMarkdown({p,d,f});
+}
+function buildDailyMarkdown({p,d,f}){
+  const L=[];
+  L.push(`# 招聘日报`); L.push('');
+  L.push(`> 统计周期：**${p.label}** ｜ 生成时间：${fmtTime(Date.now())}`);
+  L.push('');
+  L.push(`## 今日完成`); L.push('');
+  L.push(`- 🆕 新增入库：**${d.created.length}** 人`);
+  L.push(`- ➡️ 推进阶段：**${d.advanced.length}** 人`);
+  L.push(`- 🎉 正式录用：**${d.onboard.length}** 人`);
+  L.push(`- 🗑️ 淘汰出局：**${d.rejected.length}** 人`);
+  L.push('');
+  L.push(`## 今日进展明细`); L.push('');
+  const seen=new Set();
+  [...d.onboard, ...d.rejected, ...d.advanced, ...d.created].sort((a,b)=>b.updatedAt-a.updatedAt).forEach(c=>{
+    if(!c||seen.has(c.id)) return; seen.add(c.id);
+    let act;
+    if(d.onboard.some(x=>x.id===c.id)) act='🎉 正式录用';
+    else if(d.rejected.some(x=>x.id===c.id)) act='🗑️ 淘汰出局';
+    else if(d.created.some(x=>x.id===c.id) && !d.advanced.some(x=>x.id===c.id)) act='🆕 新入库';
+    else if(d.advanced.some(x=>x.id===c.id)) act = c.prevStatus ? `➡️ 推进至「${stageName(c.status)}」（原 ${stageName(c.prevStatus)}）` : `➡️ 推进至「${stageName(c.status)}」`;
+    L.push(`- **${c.name}**（${c.position||''}）：${act}`);
+  });
+  if(seen.size===0) L.push(`- 今日暂无候选人动态`);
+  L.push('');
+  L.push(`## 当前概览`); L.push('');
+  L.push(`- 进行中：**${f.active}** 人 ｜ 总池：**${f.total}** 人 ｜ 整体转化率：**${(f.overall*100).toFixed(1)}%**`);
+  return L.join('\n');
+}
+
+/* 日报「文字模式」：参照主流日报写法（今日完成→进行中→明日计划→需要支持→小结），
+   生成一段可直接发送的叙述式文字，而非分块卡片 */
+function nameList(arr, n){
+  n = n||8;
+  if(!arr || !arr.length) return '无';
+  const names = arr.map(c=>c.name||'候选人');
+  if(names.length<=n) return names.join('、');
+  return names.slice(0,n).join('、') + ` 等 ${names.length} 人`;
+}
+function renderDailyText(d, p, f){
+  const md = buildDailyTextMarkdown(d, p, f);
+  const out = document.getElementById('reportOutput');
+  out.innerHTML = mdToHtml(md);
+  out.classList.add('show');
+  lastReportMD = md;
+}
+function buildDailyTextMarkdown(d, p, f){
+  const L = [];
+  const wk = ['日','一','二','三','四','五','六'][new Date(p.start).getDay()];
+  const dt = new Date(p.start);
+  const dateStr = `${dt.getFullYear()}年${String(dt.getMonth()+1).padStart(2,'0')}月${String(dt.getDate()).padStart(2,'0')}日`;
+  L.push(`# 招聘日报`);
+  L.push('');
+  L.push(`> 统计周期：**${p.label}** ｜ 生成时间：${fmtTime(Date.now())} ｜ 数据范围：本看板全部 ${f.total} 名候选人`);
+  L.push('');
+
+  // 今日概览句（用数字量化，符合主流日报写法）
+  L.push(`今日（${dateStr} 星期${wk}）共新增候选人 **${d.created.length}** 人，推进 **${d.advanced.length}** 人至下一阶段，其中 **${d.onboard.length}** 人正式录用、**${d.rejected.length}** 人淘汰。截至今日，招聘流程进行中 **${f.active}** 人，候选人总池 **${f.total}** 人，整体转化率（${stages[0].name}→${stages[stages.length-1].name}）**${(f.overall*100).toFixed(1)}%**。`);
+  L.push('');
+
+  L.push(`## 今日重点进展`);
+  L.push('');
+  if(d.created.length) L.push(`- 🆕 **新入库**：${nameList(d.created)}（共 ${d.created.length} 人）`);
+  if(d.advanced.length){
+    const adv = d.advanced.map(c=> c.prevStatus ? `${c.name} 由「${stageName(c.prevStatus)}」推进至「${stageName(c.status)}」` : `${c.name} 推进至「${stageName(c.status)}」`).join('；');
+    L.push(`- ➡️ **推进阶段**：${adv}（共 ${d.advanced.length} 人）`);
+  }
+  if(d.onboard.length) L.push(`- 🎉 **正式录用**：${nameList(d.onboard)}（共 ${d.onboard.length} 人）`);
+  if(d.rejected.length) L.push(`- 🗑️ **淘汰出局**：${nameList(d.rejected)}（共 ${d.rejected.length} 人）`);
+  if(!d.created.length && !d.advanced.length && !d.onboard.length && !d.rejected.length) L.push(`- 今日暂无候选人动态`);
+  L.push('');
+
+  // 瓶颈/关注
+  L.push(`## 当前瓶颈与关注`);
+  L.push('');
+  const focus = [];
+  if(d.worst && d.worst.conv<0.6) focus.push(`转化瓶颈在「${d.worst.name} → ${d.worst.next}」环节（转化率仅 ${(d.worst.conv*100).toFixed(1)}%），建议优先安排该阶段面试或反馈，缩短决策周期。`);
+  if(d.biggestRej && d.biggestRej.rej>0) focus.push(`流失集中在「${d.biggestRej.name}」阶段（累计 ${d.biggestRej.rej} 人），建议复盘该环节筛选标准与沟通话术。`);
+  if(d.pendingScreen>0) focus.push(`当前有 ${d.pendingScreen} 人处于「${stages[0].name}」待处理，尽快初筛可提升整体推进效率。`);
+  L.push(focus.length ? focus.map(t=>`- ${t}`).join('\n') : `- 暂无明显瓶颈，各环节转化稳定 🎉`);
+  L.push('');
+
+  // 明日计划
+  L.push(`## 明日计划`);
+  L.push('');
+  const plan = [];
+  if(d.pendingScreen>0) plan.push(`处理「${stages[0].name}」中的 ${d.pendingScreen} 人，完成初筛分流；`);
+  if(d.stalled.length) plan.push(`跟进 ${Math.min(d.stalled.length,5)} 名停滞候选人（${d.stalled.slice(0,3).map(c=>c.name).join('、')}），推动进入下一阶段；`);
+  if(d.worst && d.worst.conv<0.6) plan.push(`重点突破「${d.worst.name}」瓶颈，优化该环节面试安排与反馈时效；`);
+  plan.push(`持续推进在途候选人，补充简历来源保障 pipeline 供给。`);
+  plan.forEach((t,i)=>L.push(`${i+1}. ${t}`));
+  L.push('');
+
+  // 需要支持/风险
+  L.push(`## 需要支持 / 风险`);
+  L.push('');
+  if(d.stalled.length){
+    L.push(`- ⏳ ${d.stalled.length} 名候选人已停留超 7 天未推进（${nameList(d.stalled,5)}），建议专人跟进或主动沟通，避免人才流失。`);
+  } else if(d.pendingScreen>0){
+    L.push(`- 📥 当前 ${d.pendingScreen} 人处于「${stages[0].name}」待处理，建议尽快初筛分流。`);
+  } else {
+    L.push(`- 暂无长期停滞的候选人，招聘节奏良好 🎉`);
+  }
+  L.push('');
+
+  // 工作小结
+  L.push(`## 工作小结`);
+  L.push('');
+  let summary;
+  if(d.created.length===0 && d.advanced.length===0 && d.onboard.length===0 && d.rejected.length===0){
+    summary = `今日无新增与推进记录，建议检查简历来源渠道与初筛节奏，保障后续 pipeline 供给。`;
+  } else if(d.worst && d.worst.conv<0.6){
+    summary = `今日招聘动作以「推进 + 初筛」为主，整体 pipeline 健康；后续重点放在「${d.worst.name}」环节的提速，缩短候选人决策周期。`;
+  } else {
+    summary = `今日招聘推进有序，录用与转化保持平稳；建议保持各环节反馈时效，持续关注在途候选人。`;
+  }
+  L.push(summary);
+  return L.join('\n');
+}
+
+/* 周报「文字模式」：同日报 5 段骨架（本周完成→瓶颈→下周计划→风险→小结），
+   但带环比、漏斗与渠道等周度视角的信息 */
+function renderWeeklyText(d, p, f){
+  const md = buildWeeklyTextMarkdown(d, p, f);
+  const out = document.getElementById('reportOutput');
+  out.innerHTML = mdToHtml(md);
+  out.classList.add('show');
+  lastReportMD = md;
+}
+function buildWeeklyTextMarkdown(d, p, f){
+  const L = [];
+  const cmp = (a,b)=>{ const x=a-b; return x===0?`与${p.cmpLabel}持平`:`较${p.cmpLabel}${x>0?'+':''}${x}`; };
+  L.push(`# 招聘周报`);
+  L.push('');
+  L.push(`> 统计周期：**${p.label}** ｜ 生成时间：${fmtTime(Date.now())} ｜ 数据范围：本看板全部 ${f.total} 名候选人`);
+  L.push('');
+
+  L.push(`本周共新增候选人 **${d.created.length}** 人（${cmp(d.created.length,d.createdP.length)}），推进 **${d.advanced.length}** 人（${cmp(d.advanced.length,d.advancedP.length)}），正式录用 **${d.onboard.length}** 人（${cmp(d.onboard.length,d.onboardP.length)}），淘汰 **${d.rejected.length}** 人（${cmp(d.rejected.length,d.rejectedP.length)}）。截至本周，流程进行中 **${f.active}** 人，候选人总池 **${f.total}** 人，整体转化率（${stages[0].name}→${stages[stages.length-1].name}）**${(f.overall*100).toFixed(1)}%**，累计录用 **${f.hired}** 人。`);
+  L.push('');
+
+  L.push(`## 本周关键进展`);
+  L.push('');
+  L.push(`- 🆕 **新增入库**：${d.created.length} 人（${p.cmpLabel} ${d.createdP.length} 人）${d.created.length?`—— ${nameList(d.created,6)}`:''}`);
+  L.push(`- ➡️ **推进阶段**：${d.advanced.length} 人（${p.cmpLabel} ${d.advancedP.length} 人）`);
+  L.push(`- 🎉 **正式录用**：${d.onboard.length} 人${d.onboard.length?`—— ${nameList(d.onboard,6)}`:''}`);
+  L.push(`- 🗑️ **淘汰出局**：${d.rejected.length} 人（${p.cmpLabel} ${d.rejectedP.length} 人）`);
+  L.push('');
+
+  L.push(`## 漏斗与渠道`);
+  L.push('');
+  const top = stages.map((s,i)=>({name:s.name,n:f.rows[i].count})).filter(x=>x.n>0);
+  if(top.length) L.push(`- 📊 各阶段在库：${top.map(x=>`${x.name} ${x.n} 人`).join('；')}`);
+  if(d.worst && d.worst.conv<0.6) L.push(`- 🔻 最弱环节：${d.worst.name} → ${d.worst.next}（转化率 ${(d.worst.conv*100).toFixed(1)}%）`);
+  if(d.biggestRej && d.biggestRej.rej>0) L.push(`- ⚠️ 流失最多：${d.biggestRej.name}（累计淘汰 ${d.biggestRej.rej} 人）`);
+  const srcRows = Object.entries(d.srcMap).filter(([k,v])=>v.new>0||v.hired>0).map(([k,v])=>({k,...v})).sort((a,b)=>b.new-a.new);
+  if(srcRows.length) L.push(`- 📥 渠道贡献：${srcRows.slice(0,5).map(r=>`${r.k} 新增 ${r.new} 人${r.hired?`（录用 ${r.hired}）`:''}`).join('；')}`);
+  L.push('');
+
+  L.push(`## 下周计划`);
+  L.push('');
+  const plan = [];
+  if(d.pendingScreen>0) plan.push(`处理「${stages[0].name}」中的 ${d.pendingScreen} 人，完成初筛分流；`);
+  if(d.stalled.length) plan.push(`跟进 ${Math.min(d.stalled.length,5)} 名停滞候选人（${d.stalled.slice(0,3).map(c=>c.name).join('、')}），推动进入下一阶段；`);
+  if(d.worst && d.worst.conv<0.6) plan.push(`重点突破「${d.worst.name}」瓶颈，优化面试安排与反馈时效；`);
+  plan.push(`持续补充简历来源，保障 pipeline 供给。`);
+  plan.forEach((t,i)=>L.push(`${i+1}. ${t}`));
+  L.push('');
+
+  L.push(`## 需要支持 / 风险`);
+  L.push('');
+  if(d.stalled.length){
+    d.stalled.slice(0,5).forEach(c=>L.push(`- ⏳ **${c.name}**（${c.position||''}）：停留「${stageName(c.status)}」已 ${Math.floor((d.now-c.updatedAt)/864e5)} 天未推进`));
+    if(d.stalled.length>5) L.push(`- 另有 ${d.stalled.length-5} 名候选人同样停滞超 7 天`);
+  } else if(d.pendingScreen>0){
+    L.push(`- 📥 当前 ${d.pendingScreen} 人处于「${stages[0].name}」待处理，建议尽快初筛分流。`);
+  } else {
+    L.push(`- 暂无长期停滞的候选人，招聘节奏良好 🎉`);
+  }
+  L.push('');
+
+  L.push(`## 工作小结`);
+  L.push('');
+  let ws;
+  if(d.created.length===0 && d.advanced.length===0){
+    ws = `本周无新增与推进记录，建议重点检查简历来源渠道与初筛节奏，尽快补充 pipeline。`;
+  } else if(d.worst && d.worst.conv<0.6){
+    ws = `本周 pipeline 保持运转，但「${d.worst.name} → ${d.worst.next}」是明显瓶颈（${(d.worst.conv*100).toFixed(1)}%），下周应集中资源打通该环节，并关注停滞候选人的主动沟通。`;
+  } else {
+    ws = `本周各环节转化平稳，录用与推进按计划进行；建议保持反馈时效，持续关注在途候选人与渠道质量。`;
+  }
+  L.push(ws);
+  return L.join('\n');
 }
 
 function buildMarkdown({title,p,d,f,isWeekly,pr}){
@@ -1693,6 +2017,7 @@ function mdToHtml(md){
       continue;
     }
     if(line.startsWith('- ')){ html+='<ul>'; while(i<lines.length && lines[i].startsWith('- ')){ html+=`<li>${inline(lines[i].slice(2))}</li>`; i++; } html+='</ul>'; continue; }
+    if(/^\d+\.\s/.test(line)){ html+='<ol>'; while(i<lines.length && /^\d+\.\s/.test(lines[i])){ html+=`<li>${inline(lines[i].replace(/^\d+\.\s/,''))}</li>`; i++; } html+='</ol>'; continue; }
     if(line.trim()===''){ i++; continue; }
     html+=`<p>${inline(line)}</p>`; i++;
   }
@@ -1704,6 +2029,12 @@ document.getElementById('repTypeSeg').addEventListener('click', e=>{
   const b = e.target.closest('.seg-btn'); if(!b) return;
   repType = b.dataset.type;
   document.querySelectorAll('#repTypeSeg .seg-btn').forEach(x=>x.classList.toggle('active',x===b));
+  renderReport();
+});
+document.getElementById('repModeSeg').addEventListener('click', e=>{
+  const b = e.target.closest('.seg-btn'); if(!b) return;
+  repMode = b.dataset.mode;
+  document.querySelectorAll('#repModeSeg .seg-btn').forEach(x=>x.classList.toggle('active',x===b));
   renderReport();
 });
 document.getElementById('btnGenReport').addEventListener('click', renderReport);
@@ -1735,6 +2066,11 @@ document.getElementById('btnPrintReport').addEventListener('click', ()=>{
 saveStages();
 renderAll();
 startAutoRefresh();
+/* 若加载时发现已保存的阶段配置会导致推进断链（如"终试"跳到"Offer"、跳过"背景调查"），
+   已自动恢复默认流程，这里给用户一个明确提示 */
+if(stagesAutoRepaired){
+  setTimeout(()=>toast('检测到阶段配置异常（会导致「终试→背景调查」等推进断链），已自动恢复默认流程'), 700);
+}
 loadPositions();
 </script>
 </body>
